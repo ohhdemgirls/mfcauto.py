@@ -3,6 +3,7 @@ Differences between the Python and NodeJS versions of MFCAuto
 =============================================================
 
 As of April 16, 2016:
+
 - Many function names are different in an attempt to be more Pythonic. In some cases names have simply been converted to lowercase, in other cases camel casing as been converted to underscore separated names
 - Model.when is not yet implemented
 - Packet.chatString is not yet implemented

@@ -18,7 +18,7 @@ This package requires Python 3.5 or later.
     # Install or upgrade to the latest version of mfcauto.py
     $ pip install --upgrade git+https://github.com/ZombieAlex/mfcauto.py@master
 
-To install a specific commit or tag, refer to the `pip documentation`.
+To install a specific commit or tag, refer to the `pip documentation`_.
 
 .. _`pip documentation`: https://pip.pypa.io/en/latest/reference/pip_install/#git
 
@@ -45,7 +45,7 @@ Since connect() is blocking, to do something after connecting a SimpleClient you
     client.on(FCTYPE.USERNAMELOOKUP, handler)
     client.on(FCTYPE.CLIENT_CONNECTED, lambda: client.tx_cmd(FCTYPE.USERNAMELOOKUP, 0, 20, 0, 'AspenRae'))
 
-    client.connect(false)
+    client.connect(False)
 
 There is a much more complete version of this example in the tests folder, userLookup.py, which can be run directly from there.
 
