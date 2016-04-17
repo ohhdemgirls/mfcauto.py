@@ -1,7 +1,12 @@
+import re
+import html
+from urllib.parse import unquote
 from .constants import FCTYPE
 from .model import Model
 
 __all__ = ["Packet"]
+
+emote_pattern = re.compile(r"#~(e|c|u|ue),(\w+)(\.?)(jpeg|jpg|gif|png)?,([\w\-\:\);\(\]\=\$\?\*]{0,48}),?(\d*),?(\d*)~#")
 
 class Packet:
     def __init__(self, fctype, nfrom, nto, narg1, narg2, smessage = None):
@@ -13,6 +18,8 @@ class Packet:
         self.smessage = smessage
         self._flatdict = None
         self._aboutModel = None
+        self._pmessage = -1
+        self._chat_string = -1
     @property
     def aboutmodel(self):
         if self._aboutModel == None:
@@ -34,7 +41,30 @@ class Packet:
                 mid = mid - 100000000
             self._aboutModel = Model.get_model(mid)
         return self._aboutModel
-    #@TODO - chatstring and all that other stuff that Packet.js does...
+    def _parse_emotes(self, text):
+        text = unquote(text)
+        text = html.unescape(text)
+        return emote_pattern.sub(r':\5',text)
+    @property
+    def pmessage(self):
+        if self._pmessage == -1 and type(self.smessage) == dict:
+            if self.fctype in (FCTYPE.CMESG, FCTYPE.PMESG, FCTYPE.TOKENINC):
+                if "msg" in self.smessage:
+                    self._pmessage = self._parse_emotes(self.smessage["msg"])
+        if self._pmessage == -1:
+            self._pmessage = None
+        return self._pmessage
+    @property
+    def chat_string(self):
+        if self._chat_string == -1:
+            if type(self.smessage) == dict:
+                if self.fctype in (FCTYPE.CMESG, FCTYPE.PMESG):
+                    self._chat_string = "{}: {}".format(self.smessage["nm"], self.pmessage)
+                elif self.fctype == FCTYPE.TOKENINC:
+                    self._chat_string = "{} has tipped {} {} tokens{}".format(self.smessage["u"][2], self.smessage["m"][2], self.smessage["tokens"], "." if self.pmessage is None else (": '" + self.pmessage + "'"))
+        if self._chat_string == -1:
+            self._chat_string = None
+        return self._chat_string
     def __repr__(self):
         return '{{"fctype": {}, "nfrom": {}, "nto": {}, "narg1": {}, "narg2": {}, "smessage": {}}}'.format(str(self.fctype)[7:], self.nfrom, self.nto, self.narg1, self.narg2, self.smessage)
     def __str__(self):
