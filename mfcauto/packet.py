@@ -47,12 +47,11 @@ class Packet:
         return emote_pattern.sub(r':\5',text)
     @property
     def pmessage(self):
-        if self._pmessage == -1 and type(self.smessage) == dict:
-            if self.fctype in (FCTYPE.CMESG, FCTYPE.PMESG, FCTYPE.TOKENINC):
-                if "msg" in self.smessage:
-                    self._pmessage = self._parse_emotes(self.smessage["msg"])
         if self._pmessage == -1:
-            self._pmessage = None
+            if type(self.smessage) == dict and self.fctype in (FCTYPE.CMESG, FCTYPE.PMESG, FCTYPE.TOKENINC) and "msg" in self.smessage:
+                self._pmessage = self._parse_emotes(self.smessage["msg"])
+            else:
+                self._pmessage = None
         return self._pmessage
     @property
     def chat_string(self):
@@ -62,8 +61,8 @@ class Packet:
                     self._chat_string = "{}: {}".format(self.smessage["nm"], self.pmessage)
                 elif self.fctype == FCTYPE.TOKENINC:
                     self._chat_string = "{} has tipped {} {} tokens{}".format(self.smessage["u"][2], self.smessage["m"][2], self.smessage["tokens"], "." if self.pmessage is None else (": '" + self.pmessage + "'"))
-        if self._chat_string == -1:
-            self._chat_string = None
+            else:
+                self._chat_string = None
         return self._chat_string
     def __repr__(self):
         return '{{"fctype": {}, "nfrom": {}, "nto": {}, "narg1": {}, "narg2": {}, "smessage": {}}}'.format(str(self.fctype)[7:], self.nfrom, self.nto, self.narg1, self.narg2, self.smessage)

@@ -1,6 +1,6 @@
 """
-Joins the two most popular rooms and logs only
-chat and tip messages to the console.
+Joins the five most popular rooms and logs
+only chat and tip messages to the console.
 """
 
 import sys
@@ -14,7 +14,7 @@ def main():
     def on_connected():
         models = Model.find_models(lambda m: m.bestsession["vs"] == STATE.FreeChat.value)
         models.sort(key=lambda m: m.bestsession["rc"], reverse=True)
-        for model in models[:2]:
+        for model in models[:5]:
             loggers[model.nm] = createLogger(model.nm)
             print("Joining {}'s room".format(model.nm))
             c.joinroom(model.uid)
