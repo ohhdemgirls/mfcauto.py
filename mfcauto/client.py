@@ -181,10 +181,10 @@ class Client(EventEmitter):
         #@TODO - Emote encoding
     def joinroom(self, the_id):
         the_id = Client.toroomid(the_id)
-        self.tx_cmd(FCTYPE.JOINCHAN, 0, the_id, FCCHAN.JOIN)
+        self.tx_cmd(FCTYPE.JOINCHAN, 0, the_id, FCCHAN.JOIN.value)
     def leaveroom(self, the_id):
         the_id = Client.toroomid(the_id)
-        self.tx_cmd(FCTYPE.JOINCHAN, 0, the_id, FCCHAN.PART)
+        self.tx_cmd(FCTYPE.JOINCHAN, 0, the_id, FCCHAN.PART.value)
 
 class SimpleClient(Client):
     """An MFC Client object that maintains its own default event loop"""

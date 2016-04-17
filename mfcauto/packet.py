@@ -1,4 +1,3 @@
-import json
 from .constants import FCTYPE
 from .model import Model
 
@@ -37,6 +36,6 @@ class Packet:
         return self._aboutModel
     #@TODO - chatstring and all that other stuff that Packet.js does...
     def __repr__(self):
-        return '{{"fctype": {}, "nfrom": {}, "nto": {}, "narg1": {}, "narg2": {}, "smessage": {}}}'.format(str(self.fctype)[7:], self.nfrom, self.nto, self.narg1, self.narg2, json.dumps(self.smessage))
+        return '{{"fctype": {}, "nfrom": {}, "nto": {}, "narg1": {}, "narg2": {}, "smessage": {}}}'.format(str(self.fctype)[7:], self.nfrom, self.nto, self.narg1, self.narg2, self.smessage)
     def __str__(self):
         return self.__repr__()

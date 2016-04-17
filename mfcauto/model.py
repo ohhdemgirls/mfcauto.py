@@ -127,6 +127,11 @@ class Model(EventEmitter):
                     del self.knownsessions[key]
     def when(self, condition, ontre, onfalseaftertrue):
         pass #@TODO
+    def __repr__(self):
+        with self._lock:
+            return '{{"nm": {}, "uid": {}, "tags": {}, "bestsession": {}}}'.format(self.nm, self.uid, self.tags, self.bestsession)
+    def __str__(self):
+        return self.__repr__()
 
 #@TODO - Not sure if this is the best design, but for now we're faking a model to represent all models
 #this buys us some nice things because model is already an EventEmitter...I guess.  Note that we can't have
