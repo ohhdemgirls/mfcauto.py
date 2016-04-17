@@ -10,6 +10,7 @@ from .event_emitter import EventEmitter
 from .packet import Packet
 from .constants import MAGIC, FCTYPE, FCCHAN
 from .model import Model
+from .utils import log
 
 __all__ = ['Client', 'SimpleClient']
 
@@ -57,8 +58,7 @@ class MFCProtocol(asyncio.Protocol):
                 self.client.packet_received(Packet(*unpacked_data[1:-1], smessage))
             except:
                 ex = sys.exc_info()[0]
-                print("Unexpected exception: {}".format(ex))
-                traceback.print_exc()
+                log.critical("Unexpected exception: {}\n{}".format(ex, traceback.format_exc()))
                 self.loop.stop()
                 break
 
@@ -79,6 +79,7 @@ class Client(EventEmitter):
         self.uid = None
         super().__init__()
     def packet_received(self, packet):
+        log.debug(packet)
         self._process_packet(packet)
         self.emit(packet.fctype, packet)
         self.emit(FCTYPE.ANY, packet)
@@ -87,13 +88,13 @@ class Client(EventEmitter):
         fctype = packet.fctype
         if fctype == FCTYPE.LOGIN:
             if packet.narg1 != 0:
-                #@TODO - Logging calls
+                log.info("Login failed for user '{}' password '{}'".format(self.username, self.password))
                 raise Exception("Login failed")
             else:
                 self.session_id = packet.nto
                 self.uid = packet.narg2
                 self.username = packet.smessage
-                #@TODO - Logging calls...
+                log.info("Login handshake completed. Logged in as '{}' with sessionId {}".format(self.username, self.session_id))
         elif fctype in (FCTYPE.DETAILS, FCTYPE.ROOMHELPER, FCTYPE.SESSIONSTATE, FCTYPE.ADDFRIEND, FCTYPE.ADDIGNORE, FCTYPE.CMESG, FCTYPE.PMESG, FCTYPE.TXPROFILE, FCTYPE.USERNAMELOOKUP, FCTYPE.MYCAMSTATE, FCTYPE.MYWEBCAM):
             if not ((fctype == FCTYPE.DETAILS and packet.nfrom == FCTYPE.TOKENINC) or (fctype == FCTYPE.ROOMHELPER and packet.narg2 < 100) or (fctype == FCTYPE.JOINCHAN and packet.narg2 == FCCHAN.PART)):
                 if type(packet.smessage) == dict:
@@ -135,7 +136,9 @@ class Client(EventEmitter):
     async def connect(self, login=True):
         """Connects to an MFC chat server and optionally logs in"""
         self._get_servers()
-        (self.transport, self.protocol) = await self.loop.create_connection(lambda: MFCProtocol(self.loop,self), '{}.myfreecams.com'.format(random.choice(self.server_config['chat_servers'])), 8100)
+        selected_server = random.choice(self.server_config['chat_servers'])
+        log.info("Connecting to MyFreeCams chat server {}...".format(selected_server))
+        (self.transport, self.protocol) = await self.loop.create_connection(lambda: MFCProtocol(self.loop, self), '{}.myfreecams.com'.format(selected_server), 8100)
         if login:
             self.tx_cmd(FCTYPE.LOGIN, 0, 20071025, 0, "{}:{}".format(self.username, self.password))
             if self.keepalive is None:
@@ -154,6 +157,7 @@ class Client(EventEmitter):
         if smsg is None:
             smsg = ''
         data = struct.pack(">iiiiiii{}s".format(len(smsg)), MAGIC, fctype.value, self.session_id, nto, narg1, narg2, len(smsg), smsg.encode())
+        log.debug("TxCmd sending: {}".format(data))
         self.transport.write(data)
     def tx_packet(self, packet):
         self.tx_cmd(packet.fctype, packet.nto, packet.narg1, packet.narg2, packet.smessage)
