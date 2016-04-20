@@ -24,7 +24,7 @@ class STATE(Enum):
     #C2C_ON = 20            #Unused?
     #C2C_OFF = 21           #Unused?
     Online = 90             #RX_IDLE
-    #RX_PVT = 91            #Unused?
+    ViewingPrivate = 91     #RX_PVT, Members enter this state when viewing privates
     #RX_VOY = 92            #Unused?
     #RX_GRP = 93            #Unused?
     #NULL = 126             #Unused?

@@ -17,7 +17,7 @@ class STATE(Enum):
     #C2C_ON = 20            #Unused?
     #C2C_OFF = 21           #Unused?
     Online = 90             #RX_IDLE
-    #RX_PVT = 91            #Unused?
+    ViewingPrivate = 91     #RX_PVT, Members enter this state when viewing privates
     #RX_VOY = 92            #Unused?
     #RX_GRP = 93            #Unused?
     #NULL = 126             #Unused?
@@ -197,12 +197,12 @@ class FCTYPE(Enum):
     PRIVACY = 8
     ADDFRIENDREQ = 9
     USERNAMELOOKUP = 10
-    ZBAN = 11
     BROADCASTPROFILE = 11
+    ZBAN = 11
     BROADCASTNEWS = 12
     ANNOUNCE = 13
-    MANAGELIST = 14
     MANAGELISTS = 14
+    MANAGELIST = 14
     INBOX = 15
     GWCONNECT = 16
     RELOADSETTINGS = 17
@@ -250,8 +250,8 @@ class FCTYPE(Enum):
     LISTBANS = 59
     UNBAN = 60
     SETWELCOME = 61
-    CHANOP = 62
     PERMABAN = 62
+    CHANOP = 62
     LISTCHAN = 63
     TAGS = 64
     SETPCODE = 65
@@ -284,8 +284,8 @@ class FCUCR(Enum):
     FRIENDS = 1
     MODELS = 2
     PREMIUMS = 4
-    BASICS = 8
     BASIC = 8
+    BASICS = 8
     ALL = 15
 
 class FCUPDATE(Enum):
@@ -309,8 +309,8 @@ class FCVIDEO(Enum):
     RX_VOY = 92
     RX_GRP = 93
     NULL = 126
-    UNKNOWN = 127
     OFFLINE = 127
+    UNKNOWN = 127
 
 class FCWINDOW(Enum):
     NO_USER_PM = 20
@@ -408,8 +408,8 @@ class WEBCAM(Enum):
 
 class WINDOW(Enum):
     MODE_DEFAULT = 0
-    MODE_DHTML = 1
     MODE_DESKTOP_DHTML = 1
-    MODE_MOBILE_DHTML = 2
+    MODE_DHTML = 1
     MODE_BROWSER = 2
+    MODE_MOBILE_DHTML = 2
 

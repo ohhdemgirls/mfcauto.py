@@ -19,5 +19,6 @@ class EventEmitter:
     def emit(self, event, *args):
         """Emits event causing all listeners to be called with *args"""
         if event in self.listeners:
-            for func in self.listeners[event]:
+            listener_copy = self.listeners[event].copy()
+            for func in listener_copy:
                 func(*args)

@@ -6,6 +6,7 @@ import asyncio
 import random
 import struct
 import traceback
+from threading import RLock
 from .event_emitter import EventEmitter
 from .packet import Packet
 from .constants import MAGIC, FCTYPE, FCCHAN
@@ -29,6 +30,7 @@ class MFCProtocol(asyncio.Protocol):
             # There was an exception for abnormal termination...
             #@TODO - Do something better here, probably should raise an exception
             #@TODO - Reconnect logic
+            #@TODO - Emit CLIENT_DISCONNECTED and reset Model state
             pass
     def data_received(self, data):
         self.buffer += data
@@ -40,7 +42,7 @@ class MFCProtocol(asyncio.Protocol):
                     break
 
                 #unpacked_data looks like this: (magic, fctype, nfrom, nto, narg1, narg2, spayload)
-                unpacked_data = struct.unpack(pformat, self.buffer[:struct.calcsize(pformat)])
+                unpacked_data = struct.unpack(pformat, self.buffer[:packet_size])
                 assert unpacked_data[0] == MAGIC
                 spayload = unpacked_data[6]
                 smessage = None
@@ -64,6 +66,8 @@ class MFCProtocol(asyncio.Protocol):
 
 class Client(EventEmitter):
     """An MFC Client object"""
+    userQueryLock = RLock()
+    userQueryId = 20
     def __init__(self, loop, username='guest', password='guest'):
         self.loop = loop
         self.username = username
@@ -185,6 +189,26 @@ class Client(EventEmitter):
     def leaveroom(self, the_id):
         the_id = Client.toroomid(the_id)
         self.tx_cmd(FCTYPE.JOINCHAN, 0, the_id, FCCHAN.PART.value)
+    def query_user(self, user): #Untested, @TODO
+        with Client.userQueryLock:
+            future = asyncio.Future()
+            queryId = Client.userQueryId
+            Client.userQueryId += 1
+            def handler(p):
+                if p.narg1 == queryId:
+                    self.remove_listener(FCTYPE.USERNAMELOOKUP, handler)
+                    if (not hasattr(p, "smessage")) or not isinstance(p.smessage,dict):
+                        future.set_result(None) # User doesn't exist
+                    else:
+                        future.set_result(p.smessage)
+            self.on(FCTYPE.USERNAMELOOKUP, handler);
+            if isinstance(user, int):
+                self.tx_cmd(FCTYPE.USERNAMELOOKUP, 0, queryId, user)
+            elif isinstance(user, str):
+                self.tx_cmd(FCTYPE.USERNAMELOOKUP, 0, queryId, 0, user)
+            else:
+                raise Exception("Invalid Argument")
+            return future
 
 class SimpleClient(Client):
     """An MFC Client object that maintains its own default event loop"""

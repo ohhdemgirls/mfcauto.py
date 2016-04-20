@@ -1,62 +1,58 @@
 import sys
 sys.path.append('..')
-from mfcauto import SimpleClient, FCTYPE, STATE, FCLEVEL, Model
+from mfcauto import Client, STATE, FCLEVEL, Model
+import asyncio
 
-def main():
+async def main(loop):
     if len(sys.argv) != 2:
         print('''
-Queries MFC for a specific user's details
+    Queries MFC for a specific user's details
 
-    Usage: {0} <username | userid>
+        Usage: {0} <username | userid>
 
-    Examples:
-        {0} AspenRae
-        {0} 3111899
-'''.format(sys.argv[0]))
+        Examples:
+            {0} AspenRae
+            {0} 3111899
+    '''.format(sys.argv[0]))
         sys.exit(1)
 
     idorname = sys.argv[1]
     try:
         # If we were given an integer ID, look up by ID
         idorname = int(idorname)
-        lookup = lambda: client.tx_cmd(FCTYPE.USERNAMELOOKUP, 0, 20, idorname, '')
     except ValueError:
-        # If we were given a name instead, look up by name
-        lookup = lambda: client.tx_cmd(FCTYPE.USERNAMELOOKUP, 0, 20, 0, idorname)
+        pass
 
     print()
     print("Querying MFC for {}".format(idorname))
-    client = SimpleClient()
+    client = Client(loop)
+    await client.connect(False)
+    msg = await client.query_user(idorname)
+    client.disconnect()
 
-    def state_string(uid, state):
-        if state != STATE.Private:
-            return str(state)
-        else:
+    if msg == None:
+        print("User not found")
+    else:
+        state_string = str(STATE(msg["vs"]))
+        if msg["vs"] == STATE.Private.value:
             # If the model is in private, query her details to determine if it's a true private or not
-            m = Model.get_model(uid)
+            m = Model.get_model(msg["uid"])
             if m.in_true_private:
-                return str(state) + " (True Private)"
+                state_string += " (True Private)"
             else:
-                return str(state) + " (Regular Private)"
+                state_string += " (Regular Private)"
 
-    def handler(packet):
-        if type(packet.smessage) == dict:
-            print("""
+        print("""
           Name: {}
        User ID: {}
      User Type: {}
 Current Status: {}
-""".format(packet.smessage["nm"], packet.smessage["uid"], FCLEVEL(packet.smessage["lv"]), state_string(int(packet.smessage["uid"]), STATE(packet.smessage["vs"]))))
-        else:
-            print("\nUser not found\n")
-        print("Raw response packet: {}".format(packet))
+""".format(msg["nm"], msg["uid"], FCLEVEL(msg["lv"]), state_string))
+
+        print("Raw response packet: {}".format(repr(msg)))
         print()
-        client.disconnect()
-
-    client.on(FCTYPE.USERNAMELOOKUP, handler)
-    client.on(FCTYPE.CLIENT_CONNECTED, lookup)
-
-    client.connect(False)
 
 if __name__ == '__main__':
-    main()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main(loop))
+    loop.close()
