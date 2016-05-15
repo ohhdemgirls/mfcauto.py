@@ -22,16 +22,14 @@ class MFCProtocol(asyncio.Protocol):
         self.client = client
         self.buffer = b""
     def connection_lost(self, exc):
-        if exc is None:
-            # We lost our connection, but there was no exception.
-            # Someone called client.disconnect()?
-            self.loop.stop()
-        else:
-            # There was an exception for abnormal termination...
-            #@TODO - Do something better here, probably should raise an exception
-            #@TODO - Reconnect logic
-            #@TODO - Emit CLIENT_DISCONNECTED and reset Model state
-            pass
+        self.client._disconnected()
+        # if exc is None:
+        #     # We lost our connection, but there was no exception.
+        #     # Someone called client.disconnect()?
+        #     pass
+        # else:
+        #     # There was an exception for abnormal termination...
+        #     pass
     def data_received(self, data):
         self.buffer += data
         while True:
@@ -81,6 +79,8 @@ class Client(EventEmitter):
         self._completedModels = False
         self._completedFriends = True
         self.uid = None
+        self._manual_disconnect = False
+        self._logged_in = False
         super().__init__()
     def packet_received(self, packet):
         log.debug(packet)
@@ -141,6 +141,7 @@ class Client(EventEmitter):
         """Connects to an MFC chat server and optionally logs in"""
         self._get_servers()
         selected_server = random.choice(self.server_config['chat_servers'])
+        self._logged_in = login
         log.info("Connecting to MyFreeCams chat server {}...".format(selected_server))
         (self.transport, self.protocol) = await self.loop.create_connection(lambda: MFCProtocol(self.loop, self), '{}.myfreecams.com'.format(selected_server), 8100)
         if login:
@@ -153,7 +154,18 @@ class Client(EventEmitter):
         if self.keepalive != None:
             self.keepalive.cancel()
             self.keepalive = None
+        self._manual_disconnect = True
         self.transport.close()
+    def _disconnected(self):
+        """Handles disconnect events from the underlying MFCProtocol instance, reconnecting as needed"""
+        if not self._manual_disconnect:
+            print("Disconnected from MyFreeCams.  Reconnecting in 30 seconds...")
+            self.loop.call_later(30, self.connect, self._logged_in)
+        else:
+            self.loop.stop()
+        self._manual_disconnect = False
+        self.emit(FCTYPE.CLIENT_DISCONNECTED)
+        Model.reset_all()
     def tx_cmd(self, fctype, nto, narg1, narg2, smsg=''):
         """Transmits a command back to the connected MFC chat server"""
         if type(fctype) != FCTYPE:

@@ -123,10 +123,29 @@ class Model(EventEmitter):
     def _purgeoldsessions(self):
         with self._lock:
             for key in set(self.knownsessions.keys()):
-                if "vs" not in self.knownsessions[key] or FCVIDEO(self.knownsessions[key]["vs"])==FCVIDEO.OFFLINE:
+                if "vs" not in self.knownsessions[key] or FCVIDEO(self.knownsessions[key]["vs"])==FCVIDEO.OFFLINE.value:
                     del self.knownsessions[key]
-    def when(self, condition, ontre, onfalseaftertrue):
+    def reset(self):
+        if self.uid == -500: # Ignore the fake 'All' model
+            return
+
+        with self._lock:
+            for key in set(self.knownsessions.keys()):
+                if key != self.bestsessionid and self.knownsessions[key]["vs"] != FCVIDEO.OFFLINE.value:
+                    self.knownsessions[key]["vs"] = FCVIDEO.OFFLINE.value
+            from .packet import Packet
+            blank = Packet(FCTYPE.SESSIONSTATE, 0, 0, 0, 0, {"sid": self.bestsessionid, "uid": self.uid, "vs": FCVIDEO.OFFLINE.value})
+            self.mergepacket(blank)
+    @staticmethod
+    def reset_all():
+        with _knownmodels_lock:
+            for model in _knownmodels.values():
+                model.reset()
+    def when(self, condition, ontrue, onfalseaftertrue):
         pass #@TODO
+    @staticmethod
+    def when_all(condition, ontrue, onfalseaftertrue):
+        pass
     def __repr__(self):
         with self._lock:
             return '{{"nm": {}, "uid": {}, "tags": {}, "bestsession": {}}}'.format(self.nm, self.uid, self.tags, self.bestsession)

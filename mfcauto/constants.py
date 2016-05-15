@@ -182,6 +182,7 @@ class FCSERV(Enum):
     TRANS_RESV3 = 32768
 
 class FCTYPE(Enum):
+    CLIENT_DISCONNECTED = -5
     CLIENT_MODELSLOADED = -4
     CLIENT_CONNECTED = -3
     ANY = -2
@@ -250,8 +251,8 @@ class FCTYPE(Enum):
     LISTBANS = 59
     UNBAN = 60
     SETWELCOME = 61
-    PERMABAN = 62
     CHANOP = 62
+    PERMABAN = 62
     LISTCHAN = 63
     TAGS = 64
     SETPCODE = 65
@@ -284,8 +285,8 @@ class FCUCR(Enum):
     FRIENDS = 1
     MODELS = 2
     PREMIUMS = 4
-    BASIC = 8
     BASICS = 8
+    BASIC = 8
     ALL = 15
 
 class FCUPDATE(Enum):
@@ -309,8 +310,8 @@ class FCVIDEO(Enum):
     RX_VOY = 92
     RX_GRP = 93
     NULL = 126
-    OFFLINE = 127
     UNKNOWN = 127
+    OFFLINE = 127
 
 class FCWINDOW(Enum):
     NO_USER_PM = 20

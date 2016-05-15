@@ -49,7 +49,7 @@ async def main(loop):
 Current Status: {}
 """.format(msg["nm"], msg["uid"], FCLEVEL(msg["lv"]), state_string))
 
-        print("Raw response packet: {}".format(repr(msg)))
+        print("Raw response packet: {}".format(msg))
         print()
 
 if __name__ == '__main__':
